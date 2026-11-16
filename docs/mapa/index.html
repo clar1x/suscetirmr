@@ -42,10 +42,11 @@
   <p>Suscetibilidade a deslizamentos em Recife e Jaboatão dos Guararapes (PE), modelada com XGBoost a partir de fatores derivados do MDT PE3D.</p>
   <div class="aviso">Índice relativo em cinco classes (quintis calculados na área de relevo não plano). Não é probabilidade de ocorrência nem mapa de risco: não considera exposição nem vulnerabilidade. Em áreas com poucos registros históricos, como a zona rural, o índice reflete apenas o terreno e não foi validado.</div>
   <p><b>Cobertura atual:</b> Recife e Jaboatão dos Guararapes. A expansão para os demais municípios da RMR depende de novos registros históricos.</p>
-  <p><b>Como usar:</b> clique no mapa para ver a classe do ponto nas duas versões; use as caixas da legenda para filtrar as classes.</p>
+  <p><b>Como usar:</b> clique no mapa para ver a classe do ponto nas duas versões e use as caixas da legenda para filtrar as classes.</p>
   <h2>Mapa base</h2>
   <label><input type="radio" name="base" value="osm" checked> Ruas (OpenStreetMap)</label>
   <label><input type="radio" name="base" value="topo"> Relevo (OpenTopoMap)</label>
+  <label id="linha-relevo"><input type="checkbox" id="relevo"> Relevo sombreado do PE3D (10 m)</label>
   <h2>Camada</h2>
   <div id="opcoes"></div>
   <p id="descricao"></p>
@@ -137,6 +138,15 @@ mapa.on("load", async () => {
     id === 6 ? `Relevo plano (declividade média < ${limiar}°)` : CLASSES.find((c) => c.id === id).nome;
   const versoes = {};
   let prontas = false;
+  let relevo = null;
+
+  try {
+    const resposta = await fetch("camadas/relevo.json");
+    if (resposta.ok) relevo = await resposta.json();
+  } catch (erro) {
+    relevo = null;
+  }
+  if (!relevo) document.getElementById("linha-relevo").style.display = "none";
 
   chaves.forEach((chave) => {
     mapa.addSource(chave, { type: "image", url: config[chave].imagem, coordinates: config[chave].coordenadas });
@@ -149,6 +159,16 @@ mapa.on("load", async () => {
 
   mapa.addSource("limites", { type: "geojson", data: "camadas/limites.geojson" });
   mapa.addLayer({ id: "limites", type: "line", source: "limites", paint: { "line-color": "#333", "line-width": 1.5 } });
+
+  // O relevo sombreado só é baixado quando a caixa é marcada e fica abaixo das camadas de suscetibilidade
+  document.getElementById("relevo").addEventListener("change", (e) => {
+    if (e.target.checked && !mapa.getSource("relevo")) {
+      mapa.addSource("relevo", { type: "image", url: relevo.imagem, coordinates: relevo.coordenadas });
+      mapa.addLayer({ id: "relevo", type: "raster", source: "relevo",
+                      paint: { "raster-opacity": 1, "raster-fade-duration": 0 } }, "limites");
+    }
+    if (mapa.getLayer("relevo")) mapa.setLayoutProperty("relevo", "visibility", e.target.checked ? "visible" : "none");
+  });
 
   // Lê a imagem de cada versão e guarda a classe de cada pixel (para a consulta e o filtro)
   function carregarImagem(url) {
