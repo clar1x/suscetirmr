@@ -35,16 +35,17 @@ O código, os modelos treinados, os mapas e os demais resultados são abertos. O
 | Dado | Uso | Acesso |
 |---|---|---|
 | Registros históricos de deslizamentos (pontos) | presenças | Restrito |
-| MDT PE3D/APAC, 1 m (produzido entre 2014 e 2016) | fatores de terreno | Público (APAC / Governo de Pernambuco) |
-| Limites municipais, IBGE (malha 2024) | recorte e ausências | Público |
+| MDT PE3D/APAC, 1 m (produzido entre 2014 e 2016) | fatores de terreno | Público ([serviço PE3D](https://www.gov.br/en/state-services/servico_estadual?id=14370)) |
+| Limites municipais, IBGE (malha 2024) | recorte e ausências | Público ([Malhas Territoriais](https://ibge.gov.br/geociencias/organizacao-do-territorio/estrutura-territorial/15774-malhas.html)) |
 | Modelos treinados (`modelos/`) | previsão do índice de suscetibilidade | Aberto |
 | Mapas, camadas do WebGIS e gráficos SHAP | produto final | Aberto |
 
 Layout esperado em `data/` (não versionado):
 
 ```
-data/raw/inventario/    shapefiles do inventário (restrito)
+data/raw/inventario/    shapefiles dos registros de deslizamentos (restrito)
 data/raw/ibge/          PE_Municipios_2024.shp
+data/raw/mdt/           mdt_rec_jab_5m.tif (mosaico do MDT, gerado por scripts/mosaico_mdt.sh)
 data/processed/         gerado pelos scripts
 ```
 
@@ -78,13 +79,15 @@ uv sync
 Cada etapa lê a saída da anterior. O pipeline completo exige os registros restritos.
 
 ```bash
-bash scripts/mosaico_mdt.sh mdt_rec_jab_5m.tif <pasta_mdt_recife> <pasta_mdt_jaboatao>
+bash scripts/mosaico_mdt.sh data/raw/mdt/mdt_rec_jab_5m.tif <pasta_mdt_recife> <pasta_mdt_jaboatao>
 uv run python src/amostragem.py
 uv run python src/derivar_fatores.py
 uv run python src/montar_base.py
 uv run python src/eda_base.py
 uv run python src/treinar.py
 uv run python src/treinar_sem_altitude.py
+uv run python src/eda_figuras.py
+uv run python src/curva_roc.py
 uv run python src/shap_analise.py
 uv run python src/shap_sem_altitude.py
 uv run python src/mapa_suscetibilidade.py

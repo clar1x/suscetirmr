@@ -48,6 +48,8 @@ Dois trabalhos complementam a base metodológica: Roberts et al. (2017), que mos
 
  Os registros de deslizamentos têm acesso restrito: foram usados apenas no treinamento dos modelos e não são exibidos nem disponibilizados em nenhuma forma. Estão disponíveis publicamente o código, os modelos treinados, os mapas, os gráficos SHAP, as métricas e a distribuição percentual dos registros por classe (sem expor os pontos). O repositório está no GitHub; os modelos estão na pasta `modelos/` (hospedagem em outra plataforma, como Hugging Face, é opcional). A política completa está em `docs/politica_dados.md`.
 
+**Onde encontrar os dados públicos.** O PE3D (Pernambuco Tridimensional) é um programa do Governo de Pernambuco que gerou dados espaciais de alta definição de todo o estado por varredura a laser; os produtos são consultados e baixados pelo serviço estadual [Consultar Pernambuco Tridimensional - PE3D](https://pe3d.pe.gov.br/). As malhas municipais do IBGE, agrupadas por estado, estão em [Malhas Territoriais](https://ibge.gov.br/geociencias/organizacao-do-territorio/estrutura-territorial/15774-malhas.html). Os dados de entrada restritos não são publicados, e o repositório disponibiliza os modelos e os mapas derivados (Hugging Face ou Zenodo não foram usados).
+
 ## Descrição da metodologia
 
 **Coleta e organização.** As 98 folhas do MDT (48 de Recife e 50 de Jaboatão), todas em EPSG:31985 e `float32`, têm pixels com resolução ligeiramente diferente de 1 m (0,9997 a 1,0 m), o que gera emendas em mosaicos convencionais. Elas foram reunidas e reamostradas para uma única grade de 5 m com o GDAL (`scripts/mosaico_mdt.sh`).
@@ -58,7 +60,31 @@ Dois trabalhos complementam a base metodológica: Roberts et al. (2017), que mos
 
 **Ausências.** 1.500 pontos sorteados por município, na mesma quantidade das presenças de cada um, em pixels com MDT válido e a pelo menos 100 m de qualquer presença. A base tem, portanto, classes equilibradas (1:1) por construção.
 
+**Limpeza e estrutura dos dados.** Foram descartados os registros sem geometria válida, fora do período ou fora dos dois municípios, as duplicatas e os pontos muito próximos entre si. A tabela de modelagem tem uma linha por ponto (presença ou ausência) e a estrutura abaixo; ela contém as posições dos registros e, por isso, não é publicada.
+
+| Campo | Descrição |
+|---|---|
+| `classe` | 1 = presença de deslizamento; 0 = ausência presumida |
+| `municipio` | Recife ou Jaboatão dos Guararapes |
+| `ano` | Ano do registro (apenas nas presenças) |
+| `x`, `y` | Coordenadas em UTM 25S (EPSG:31985), restritas |
+| `altitude`, `declividade`, `norte`, `leste`, `curvatura`, `twi`, `acum_log` | Fatores condicionantes (média numa janela de 45 m) |
+
 **Análise exploratória.** A declividade no pixel dos registros é baixa em muitos casos: apenas 57% das presenças ficam com 5° ou mais, e 73% com 3° ou mais. Isso decorre da imprecisão de posição, da suavização do MDT a 5 m e de registros localizados na base ou no topo das encostas, e motivou usar uma janela de contexto (45 m) em vez do pixel exato. Por isso também não se aplicou uma máscara de declividade no treinamento. Na exibição do mapa, o relevo plano (declividade média abaixo de 1,5°, o percentil 5 das presenças) aparece em cinza.
+
+![Distribuição dos fatores nas ausências e nas presenças (caixas sem valores extremos).](figuras/eda_boxplots.png)
+
+![Correlação entre os fatores condicionantes (presenças e ausências).](figuras/eda_correlacao.png)
+
+**Leitura da análise exploratória.** As distribuições de presenças e ausências se sobrepõem bastante em todos os fatores, o que antecipa um problema de dificuldade moderada para os fatores de terreno. As diferenças mais claras são:
+
+- **Altitude.** As presenças se concentram numa faixa intermediária e estreita (mediana de 38,7 m, com a metade central dos pontos entre cerca de 25 e 57 m). As ausências cobrem desde a baixada, com valores próximos de zero ou ligeiramente negativos, até as maiores altitudes (mediana de 41,0 m, com a metade central entre cerca de 5 e 83 m). Isso antecipa o papel dominante da altitude nos modelos: altitudes muito baixas indicam ausência.
+- **Declividade.** A mediana é maior nas presenças (8,8°) do que nas ausências (5,3°), mas as metades centrais das duas distribuições se sobrepõem em grande parte, o que é coerente com o poder discriminatório moderado do fator isolado.
+- **Curvatura.** Mediana próxima de zero nas ausências (terreno mais regular) e dispersão maior nas presenças, em ambos os sinais, indicando relevo mais irregular.
+- **TWI.** Menor nas presenças (mediana de 5,7, contra 6,2 nas ausências), como esperado, porque o TWI diminui com o aumento da declividade.
+- **Fluxo acumulado e orientação.** Praticamente iguais nas duas classes (medianas do fluxo de 0,81 e 0,82), com pouco poder discriminatório isolado.
+
+**Correlação entre os fatores.** A maior correlação é entre declividade e TWI (−0,81), esperada porque o TWI é calculado a partir da declividade. Seguem curvatura e fluxo acumulado (−0,60), altitude e TWI (−0,49) e altitude e declividade (0,46). As componentes da orientação não se correlacionam com os demais fatores (|r| de no máximo 0,07). Os modelos baseados em árvores toleram fatores correlacionados e, como são apenas sete fatores, nenhum foi removido (a aula de Machine Learning I reduz as variáveis quando há dezenas delas, com muita redundância). A consequência está na interpretação: a importância se divide entre fatores correlacionados, então a baixa importância do TWI no SHAP não significa que a informação hidrológica seja irrelevante.
 
 **Preparação do modelo.** Os fatores são padronizados (`StandardScaler`) dentro de um `Pipeline`, para evitar vazamento entre treino e validação.
 
@@ -122,6 +148,8 @@ Métricas no teste (blocos espaciais nunca vistos no treino). O baseline (classe
 | Random Forest | Sem altitude | 0,682 | 0,616 | 0,617 | 0,617 | 0,622 |
 | XGBoost | Sem altitude | 0,679 | 0,627 | 0,626 | 0,626 | 0,633 |
 
+![Curvas ROC no conjunto de teste, com e sem altitude.](figuras/curva_roc.png)
+
 AUC no teste por município (XGBoost): com altitude, Jaboatão 0,881 e Recife 0,824; sem altitude, Jaboatão 0,656 e Recife 0,761 (Random Forest: com altitude, 0,875 e 0,831; sem altitude, 0,662 e 0,754).
 
 ![Matrizes de confusão no teste, versão com altitude.](figuras/matrizes_com_altitude.png)
@@ -138,7 +166,7 @@ AUC no teste por município (XGBoost): com altitude, Jaboatão 0,881 e Recife 0,
 
 ![Importância por permutação (treino), versão sem altitude.](figuras/permutacao_sem_altitude.png)
 
-**Interpretação com SHAP.** Na versão com altitude, ela domina com folga, com efeito não monotônico: altitudes muito baixas (a baixada) puxam fortemente para "ausência" e as faixas intermediárias puxam para "presença". Na versão sem altitude, a **declividade** é o fator mais importante (SHAP médio absoluto de 0,52 em Jaboatão e 0,56 em Recife, no XGBoost), seguida da **curvatura** (0,23 e 0,24); fluxo acumulado, orientação e TWI contribuem menos (entre 0,04 e 0,12). A estrutura de contribuições é quase idêntica nos dois municípios, o que sustenta a comparação entre eles. O SHAP e a importância por permutação descrevem o que o modelo usa, não a causa dos deslizamentos.
+**Interpretação com SHAP.** Na versão com altitude, ela domina com folga, com efeito não monotônico: altitudes muito baixas (a baixada) puxam fortemente para "ausência" e as faixas intermediárias puxam para "presença". Na versão sem altitude, a **declividade** é o fator mais importante (SHAP médio absoluto de 0,52 em Jaboatão e 0,56 em Recife, no XGBoost), seguida da **curvatura** (0,23 e 0,24); fluxo acumulado, orientação e TWI contribuem menos (entre 0,04 e 0,12). A estrutura de contribuições é quase idêntica nos dois municípios, o que sustenta a comparação entre eles. O SHAP e a importância por permutação descrevem o que o modelo usa, não a causa dos deslizamentos. Como a declividade e o TWI são fortemente correlacionados (−0,81), a contribuição de ambos se divide entre eles; a baixa importância do TWI não deve ser lida como irrelevância do fator hidrológico.
 
 ![SHAP do XGBoost, versão com altitude.](figuras/shap_com_altitude.png)
 

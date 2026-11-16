@@ -9,7 +9,7 @@ if not hasattr(np, "in1d"):
 
 from pysheds.grid import Grid
 
-MDT = "/mnt/c/GIS/PROJETO_FTL/mosaico/mdt_rec_jab_5m.tif"
+MDT = "data/raw/mdt/mdt_rec_jab_5m.tif"
 SAIDA = "data/processed/fatores"
 RESOLUCAO = 5
 DIRMAP = (64, 128, 1, 2, 4, 8, 16, 32)
@@ -23,16 +23,19 @@ def salvar(da, nome):
 
 dem = rioxarray.open_rasterio(MDT, masked=True).squeeze("band", drop=True)
 
+# Declividade e orientação com xarray-spatial, como na aula de DEM (Week 3)
 decl = slope(dem)
 asp = aspect(dem)
 rad = np.deg2rad(asp.where(asp >= 0))  # pixels planos (-1) viram 0 abaixo
 
+# A orientação é circular (0° = 360°): decompõe em componentes norte e leste
 salvar(dem, "altitude")
 salvar(decl, "declividade")
 salvar(np.cos(rad).fillna(0), "norte")
 salvar(np.sin(rad).fillna(0), "leste")
 salvar(curvature(dem), "curvatura")
 
+# Hidrologia com pysheds, como na aula: condiciona o MDT, direção D8 e fluxo acumulado
 grid = Grid.from_raster(MDT)
 dem_grid = grid.read_raster(MDT)
 condicionado = grid.resolve_flats(grid.fill_depressions(grid.fill_pits(dem_grid)))
