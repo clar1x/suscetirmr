@@ -10,7 +10,8 @@ Projeto final (Capstone) do Future Tech Leaders Brasil, Space Tech Bootcamp 2026
 
 - **Problema:** a ocupação de encostas urbanas e os deslizamentos desafiam o planejamento territorial da Região Metropolitana do Recife (RMR).
 - **Tarefa:** classificação supervisionada binária (presença de deslizamento × não ocorrência presumida) a partir de fatores derivados de um modelo digital de terreno.
-- **Objetivo específico:** desenvolver e comparar modelos de suscetibilidade, examinar a contribuição das variáveis com SHAP e disponibilizar os mapas resultantes em um WebGIS.
+- **Objetivo específico:** desenvolver e comparar modelos de suscetibilidade, examinar a contribuição das variáveis com SHAP e disponibilizar os mapas resultantes em um WebGIS
+- **Escopo.** o recorte inicial contempla Recife e Jaboatão dos Guararapes, os municípios para os quais havia registros históricos de deslizamentos disponíveis para este trabalho. A expansão para a RMR inteira depende de novos registros.
 
 O produto é um mapa de **suscetibilidade**. Ele não substitui análises de risco, que consideram exposição e vulnerabilidade, nem avaliações geotécnicas locais ou sistemas de alerta. O projeto se relaciona aos ODS 11 (Cidades e Comunidades Sustentáveis) e 13 (Ação Contra a Mudança Global do Clima).
 

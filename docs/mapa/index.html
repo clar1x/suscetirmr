@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SuscetiRMR | Suscetibilidade a deslizamentos</title>
+<link rel="icon" href="data:,">
 <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <style>
@@ -13,10 +14,12 @@
   #mapa { height: 100%; }
   h1 { font-size: 1.3rem; margin: 0 0 6px; }
   h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: #555; margin: 18px 0 6px; }
-  p, label, .legenda div, summary { font-size: .9rem; line-height: 1.4; margin: 4px 0; }
+  p, label, summary { font-size: .9rem; line-height: 1.4; margin: 4px 0; }
   .aviso { background: #fff7e0; border: 1px solid #f0d58a; border-radius: 6px; padding: 8px 10px; font-size: .82rem; }
-  .legenda div { display: flex; align-items: center; gap: 8px; }
-  .legenda i { width: 18px; height: 14px; border: 1px solid #999; flex: none; }
+  .classe { display: flex; align-items: center; gap: 8px; font-size: .85rem; margin: 3px 0; cursor: pointer; }
+  .classe i { width: 18px; height: 14px; border: 1px solid #999; flex: none; }
+  .botoes { display: flex; gap: 6px; margin: 8px 0; }
+  button { font: inherit; font-size: .8rem; padding: 3px 8px; border: 1px solid #bbb; border-radius: 4px; background: #f6f6f6; cursor: pointer; }
   label { display: block; }
   img { max-width: 100%; border: 1px solid #d9d9d9; }
   table { width: 100%; border-collapse: collapse; font-size: .8rem; }
@@ -24,6 +27,8 @@
   th:first-child, td:first-child { text-align: left; }
   details { margin-top: 18px; }
   summary { cursor: pointer; font-weight: 600; }
+  .maplibregl-popup-content { font-size: .85rem; line-height: 1.45; }
+  .nota { color: #666; font-size: .78rem; margin-top: 4px; }
   @media (max-width: 800px) {
     body { grid-template-columns: 1fr; grid-template-rows: 55vh 45vh; }
     #mapa { order: -1; }
@@ -36,6 +41,8 @@
   <h1>SuscetiRMR</h1>
   <p>Suscetibilidade a deslizamentos em Recife e Jaboatão dos Guararapes (PE), modelada com XGBoost a partir de fatores derivados do MDT PE3D.</p>
   <div class="aviso">Índice relativo em cinco classes (quintis calculados na área de relevo não plano). Não é probabilidade de ocorrência nem mapa de risco: não considera exposição nem vulnerabilidade. Em áreas com poucos registros históricos, como a zona rural, o índice reflete apenas o terreno e não foi validado.</div>
+  <p><b>Cobertura atual:</b> Recife e Jaboatão dos Guararapes. A expansão para os demais municípios da RMR depende de novos registros históricos.</p>
+  <p><b>Como usar:</b> clique no mapa para ver a classe do ponto nas duas versões; use as caixas da legenda para filtrar as classes.</p>
   <h2>Mapa base</h2>
   <label><input type="radio" name="base" value="osm" checked> Ruas (OpenStreetMap)</label>
   <label><input type="radio" name="base" value="topo"> Relevo (OpenTopoMap)</label>
@@ -44,8 +51,12 @@
   <p id="descricao"></p>
   <h2>Opacidade</h2>
   <input id="opacidade" type="range" min="0" max="1" step="0.05" value="0.75" style="width:100%">
-  <h2>Legenda</h2>
-  <div class="legenda" id="legenda"></div>
+  <h2>Legenda e filtro</h2>
+  <div id="legenda"></div>
+  <div class="botoes">
+    <button id="todas" type="button">Todas as classes</button>
+    <button id="altas" type="button">Alta e muito alta</button>
+  </div>
   <p id="nota-plano"></p>
   <h2>Desempenho</h2>
   <p id="desempenho"></p>
@@ -66,20 +77,26 @@
   </details>
   <h2>Dados e créditos</h2>
   <p>MDT: PE3D/APAC. Limites municipais: IBGE. Mapas base: © OpenStreetMap contributors; © OpenTopoMap (CC-BY-SA).</p>
-  <p>Projeto Capstone, Future Tech Leaders Brasil 2026. Documentação completa no <a href="https://github.com/clar1x/suscetirmr">GitHub</a>.</p>
+  <p>Projeto Capstone, Future Tech Leaders Brasil 2026. Documentação completa no <a href="https://github.com/clar1x/suscetirmr">GitHub</a>. <a href="../">Relatório completo</a>.</p>
 </aside>
 <div id="mapa"></div>
 <script>
 const PADRAO = "terreno";
 const CLASSES = [
-  ["Muito baixa", "rgb(255,255,178)"], ["Baixa", "rgb(254,204,92)"], ["Média", "rgb(253,141,60)"],
-  ["Alta", "rgb(240,59,32)"], ["Muito alta", "rgb(189,0,38)"]
+  { id: 1, nome: "Muito baixa", rgb: [255, 255, 178] },
+  { id: 2, nome: "Baixa", rgb: [254, 204, 92] },
+  { id: 3, nome: "Média", rgb: [253, 141, 60] },
+  { id: 4, nome: "Alta", rgb: [240, 59, 32] },
+  { id: 5, nome: "Muito alta", rgb: [189, 0, 38] },
+  { id: 6, nome: "Relevo plano", rgb: [190, 190, 190] }
 ];
+const POR_COR = new Map(CLASSES.map((c) => [(c.rgb[0] << 16) | (c.rgb[1] << 8) | c.rgb[2], c.id]));
 const DESCRICOES = {
   completo: "Inclui a altitude, que domina o modelo e atua em parte como proxy do contexto geomorfológico (baixada contra morros).",
   terreno: "Usa apenas declividade, curvatura, orientação, TWI e acumulação de fluxo."
 };
 const pt = (n) => String(n).replace(".", ",");
+const ativas = new Set(CLASSES.map((c) => c.id));
 
 const mapa = new maplibregl.Map({
   container: "mapa",
@@ -102,6 +119,7 @@ const mapa = new maplibregl.Map({
 });
 mapa.addControl(new maplibregl.NavigationControl(), "top-right");
 mapa.addControl(new maplibregl.ScaleControl());
+mapa.getCanvas().style.cursor = "crosshair";
 
 document.querySelectorAll("input[name=base]").forEach((r) =>
   r.addEventListener("change", (e) => {
@@ -114,6 +132,11 @@ mapa.on("load", async () => {
   const chaves = Object.keys(config);
   const opacidade = document.getElementById("opacidade");
   const ref = config[PADRAO];
+  const limiar = pt(ref.limiar_plano);
+  const nomeClasse = (id) =>
+    id === 6 ? `Relevo plano (declividade média < ${limiar}°)` : CLASSES.find((c) => c.id === id).nome;
+  const versoes = {};
+  let prontas = false;
 
   chaves.forEach((chave) => {
     mapa.addSource(chave, { type: "image", url: config[chave].imagem, coordinates: config[chave].coordenadas });
@@ -127,9 +150,90 @@ mapa.on("load", async () => {
   mapa.addSource("limites", { type: "geojson", data: "camadas/limites.geojson" });
   mapa.addLayer({ id: "limites", type: "line", source: "limites", paint: { "line-color": "#333", "line-width": 1.5 } });
 
-  const limiar = pt(ref.limiar_plano);
-  document.getElementById("legenda").innerHTML = [...CLASSES, [`Relevo plano (declividade média < ${limiar}°)`, "rgb(190,190,190)"]]
-    .map(([nome, cor]) => `<div><i style="background:${cor}"></i>${nome}</div>`).join("");
+  // Lê a imagem de cada versão e guarda a classe de cada pixel (para a consulta e o filtro)
+  function carregarImagem(url) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  async function prepararVersao(chave) {
+    const cfg = config[chave];
+    const img = await carregarImagem(cfg.imagem);
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+    const dados = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const classes = new Uint8Array(canvas.width * canvas.height);
+    const px = dados.data;
+    for (let i = 0, j = 0; i < px.length; i += 4, j++) {
+      if (px[i + 3] === 0) continue;
+      classes[j] = POR_COR.get((px[i] << 16) | (px[i + 1] << 8) | px[i + 2]) || 0;
+    }
+    const [noroeste, nordeste, , sudoeste] = cfg.coordenadas;
+    versoes[chave] = {
+      canvas, ctx, dados, classes, largura: canvas.width, altura: canvas.height,
+      noroeste: maplibregl.MercatorCoordinate.fromLngLat({ lng: noroeste[0], lat: noroeste[1] }),
+      sudeste: maplibregl.MercatorCoordinate.fromLngLat({ lng: nordeste[0], lat: sudoeste[1] }),
+      url: null
+    };
+  }
+
+  // A imagem está em Web Mercator, então a posição do pixel é proporcional às coordenadas Mercator
+  function classeEm(v, lngLat) {
+    const m = maplibregl.MercatorCoordinate.fromLngLat(lngLat);
+    const u = (m.x - v.noroeste.x) / (v.sudeste.x - v.noroeste.x);
+    const w = (m.y - v.noroeste.y) / (v.sudeste.y - v.noroeste.y);
+    if (u < 0 || u >= 1 || w < 0 || w >= 1) return 0;
+    return v.classes[Math.floor(w * v.altura) * v.largura + Math.floor(u * v.largura)];
+  }
+
+  async function aplicarFiltro(chave) {
+    const v = versoes[chave];
+    const copia = new Uint8ClampedArray(v.dados.data);
+    for (let j = 0, i = 3; j < v.classes.length; j++, i += 4) {
+      if (v.classes[j] && !ativas.has(v.classes[j])) copia[i] = 0;
+    }
+    v.ctx.putImageData(new ImageData(copia, v.largura, v.altura), 0, 0);
+    const blob = await new Promise((resolve) => v.canvas.toBlob(resolve));
+    const url = URL.createObjectURL(blob);
+    mapa.getSource(chave).updateImage({ url, coordinates: config[chave].coordenadas });
+    if (v.url) URL.revokeObjectURL(v.url);
+    v.url = url;
+  }
+
+  const atualizarFiltro = () => (prontas ? Promise.all(chaves.map(aplicarFiltro)) : null);
+  const sincronizarCaixas = () =>
+    document.querySelectorAll("#legenda input").forEach((cx) => {
+      cx.checked = ativas.has(Number(cx.dataset.classe));
+    });
+
+  document.getElementById("legenda").innerHTML = CLASSES
+    .map((c) => `<label class="classe"><input type="checkbox" data-classe="${c.id}" checked><i style="background:rgb(${c.rgb.join(",")})"></i>${nomeClasse(c.id)}</label>`)
+    .join("");
+  document.getElementById("legenda").addEventListener("change", (e) => {
+    const id = Number(e.target.dataset.classe);
+    if (e.target.checked) ativas.add(id); else ativas.delete(id);
+    atualizarFiltro();
+  });
+  document.getElementById("todas").addEventListener("click", () => {
+    CLASSES.forEach((c) => ativas.add(c.id));
+    sincronizarCaixas();
+    atualizarFiltro();
+  });
+  document.getElementById("altas").addEventListener("click", () => {
+    ativas.clear();
+    ativas.add(4);
+    ativas.add(5);
+    sincronizarCaixas();
+    atualizarFiltro();
+  });
+
   document.getElementById("nota-plano").textContent =
     `Em cinza, o relevo plano (declividade média abaixo de ${limiar}° numa janela de 45 m; ${pt(ref.pct_area_plana)}% da área mapeada), fora do foco do modelo. Esse limiar deixa de fora ${pt(ref.pct_presencas_planas)}% dos pontos de deslizamento usados no treino.`;
 
@@ -153,9 +257,27 @@ mapa.on("load", async () => {
   opacidade.addEventListener("input", (e) =>
     chaves.forEach((c) => mapa.setPaintProperty(c, "raster-opacity", Number(e.target.value))));
 
-  const [noroeste, nordeste, , sudoeste] = ref.coordenadas;
+  mapa.on("click", (e) => {
+    let corpo;
+    if (!prontas) {
+      corpo = "<div>As camadas ainda estão carregando; tente de novo em instantes.</div>";
+    } else {
+      corpo = chaves.map((c) => {
+        const id = classeEm(versoes[c], e.lngLat);
+        return `<div><b>${config[c].titulo}:</b> ${id ? nomeClasse(id) : "fora da área mapeada"}</div>`;
+      }).join("");
+    }
+    new maplibregl.Popup({ maxWidth: "300px" })
+      .setLngLat(e.lngLat)
+      .setHTML(corpo + '<div class="nota">Índice relativo em quintis; não é probabilidade nem risco.</div>')
+      .addTo(mapa);
+  });
+
+  const [, nordeste, , sudoeste] = ref.coordenadas;
   mapa.fitBounds([[sudoeste[0], sudoeste[1]], [nordeste[0], nordeste[1]]], { padding: 20, animate: false });
   selecionar(PADRAO);
+
+  Promise.all(chaves.map(prepararVersao)).then(() => { prontas = true; });
 });
 </script>
 </body>

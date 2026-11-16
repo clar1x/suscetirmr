@@ -2271,6 +2271,7 @@ vertical-align: -.125em;
 <p><strong>Problema.</strong> Já existem mapas de suscetibilidade a deslizamentos para a RMR, mas faltam modelos abertos, reprodutíveis e interpretáveis, avaliados com validação espacial e capazes de mostrar quais fatores sustentam cada previsão, para Recife e Jaboatão dos Guararapes.</p>
 <p><strong>Tarefa.</strong> Classificação supervisionada binária (presença de deslizamento contra não ocorrência presumida) a partir de fatores derivados de um modelo digital de terreno.</p>
 <p><strong>Objetivo específico.</strong> Desenvolver e comparar modelos de suscetibilidade (Random Forest e XGBoost), interpretar a contribuição dos fatores com SHAP e disponibilizar os mapas em um WebGIS.</p>
+<p><strong>Escopo.</strong> O recorte inicial contempla Recife e Jaboatão dos Guararapes, os municípios para os quais havia registros históricos de deslizamentos disponíveis para este trabalho. O nome SuscetiRMR indica o objetivo mais amplo: a lista de municípios é um parâmetro dos scripts e o WebGIS é gerado a partir de um arquivo de configuração, de modo que, havendo registros de outros municípios da Região Metropolitana do Recife, o pipeline pode ser estendido à RMR inteira.</p>
 <p><strong>Relevância para os ODS e para o ecossistema geoespacial.</strong> O projeto se relaciona ao ODS 11 (Cidades e Comunidades Sustentáveis), ao apoiar o planejamento urbano, a identificação de áreas prioritárias para ações preventivas e a atuação da Defesa Civil, e ao ODS 13 (Ação Contra a Mudança Global do Clima), ao oferecer subsídios para a preparação das cidades diante de chuvas intensas. No ecossistema geoespacial, combina dados abertos (MDT PE3D e limites do IBGE), aprendizado de máquina interpretável e um WebGIS estático e de código aberto. Os mapas representam <strong>suscetibilidade</strong>, e não substituem análises de risco, que consideram exposição e vulnerabilidade.</p>
 </section>
 <section id="revisão-da-literatura" class="level1" data-number="2">
@@ -2761,7 +2762,8 @@ vertical-align: -.125em;
 <li><strong>Índice.</strong> A saída não é uma probabilidade calibrada, e as classes são quintis, ou seja, posições relativas. O limiar do relevo plano foi definido a partir das presenças.</li>
 <li><strong>Fatores estáticos.</strong> Não há chuva, cobertura vegetal nem uso do solo, que condicionam o gatilho e a estabilidade das encostas.</li>
 <li><strong>Produto.</strong> O WebGIS exibe uma camada raster a 20 m, sem consulta por pixel nem download dos valores.</li>
-<li><strong>Perspectivas.</strong> Transferência espacial entre os municípios, expansão para outros municípios da RMR e validação com setores de risco oficiais.</li>
+<li><strong>Cobertura.</strong> O mapa cobre apenas Recife e Jaboatão dos Guararapes; os demais municípios da RMR não foram modelados por falta de registros disponíveis. A expansão depende da disponibilidade desses registros e de uma nova validação, porque os fatores e a distribuição das ocorrências podem diferir entre municípios.</li>
+<li><strong>Perspectivas.</strong> Expansão para os demais municípios da RMR, avaliação da transferência de modelos entre municípios e validação com setores de risco oficiais.</li>
 </ul>
 </section>
 <section id="referências" class="level1" data-number="7">
