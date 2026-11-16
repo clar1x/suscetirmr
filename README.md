@@ -4,7 +4,7 @@ Suscetibilidade a deslizamentos em Recife e Jaboatão dos Guararapes (PE) com Ra
 
 Projeto final (Capstone) do Future Tech Leaders Brasil, Space Tech Bootcamp 2026.
 
-**WebGIS:** _link do GitHub Pages_
+**WebGIS:** [_link do GitHub Pages_](https://clar1x.github.io/suscetirmr/mapa/)
 
 ## Objetivo
 
