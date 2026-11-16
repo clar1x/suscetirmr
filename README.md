@@ -4,7 +4,7 @@ Suscetibilidade a deslizamentos em Recife e Jaboatão dos Guararapes (PE) com Ra
 
 Projeto final (Capstone) do Future Tech Leaders Brasil, Space Tech Bootcamp 2026.
 
-**WebGIS:** [_link do GitHub Pages_](https://clar1x.github.io/suscetirmr/mapa/)
+**WebGIS:** [_Mapa_](https://clar1x.github.io/suscetirmr/mapa/)
 
 ## Objetivo
 
@@ -93,6 +93,7 @@ uv run python src/shap_analise.py
 uv run python src/shap_sem_altitude.py
 uv run python src/mapa_suscetibilidade.py
 uv run python src/mapa_sem_altitude.py
+uv run python src/exportar_relevo.py
 uv run python src/exportar_webgis.py
 uv run python -m http.server 8000 --directory docs/mapa
 ```
@@ -105,7 +106,7 @@ Os caminhos de entrada ficam no bloco de configuração no início de cada scrip
 2. **Fatores.** Derivados do MDT (mosaico reamostrado para 5 m): altitude, declividade, orientação (componentes norte e leste), curvatura, TWI e fluxo acumulado (log). Declividade e orientação seguem o método visto no curso (`xarray-spatial`) e o fluxo segue `pysheds`. Extraídos como média numa janela de 45 m, para atenuar a imprecisão posicional dos pontos.
 3. **Ausências.** 1.500 pontos sorteados por município, na mesma quantidade das presenças, em pixels com MDT válido e a pelo menos 100 m de qualquer presença.
 4. **Modelos.** RF e XGBoost em `Pipeline` com padronização, baseline `DummyClassifier` e `GridSearchCV`, no roteiro da aula de Machine Learning I.
-5. **Validação espacial.** Blocos de 2 km: 20% dos blocos reservados para teste (usado uma única vez) e validação cruzada em 4 folds por bloco (`GroupKFold`), que faz o papel do `TimeSeriesSplit` da aula (Roberts et al., 2017).
+5. **Validação espacial.** Blocos de 2 km: 20% dos blocos reservados para teste (reservados para a avaliação final e não usados no ajuste dos hiperparâmetros) e validação cruzada em 4 folds por bloco (`GroupKFold`), que faz o papel do `TimeSeriesSplit` da aula (Roberts et al., 2017).
 6. **Interpretação.** SHAP (`TreeExplainer`) e importância por permutação.
 7. **Mapa.** Índice relativo (saída do modelo, 0 a 1) em cinco classes por quintis, calculados na área de relevo não plano. O relevo plano (declividade média abaixo de 1,5°, definido pelo percentil 5 das presenças; 26,9% da área mapeada) aparece em cinza apenas na exibição.
 8. **Duas versões.** Com e sem altitude, porque a altitude domina o modelo e funciona em parte como proxy do contexto geomorfológico.
@@ -126,7 +127,7 @@ O baseline (classe constante) tem AUC de 0,500.
 - Os dois modelos superam o baseline. RF e XGBoost ficam empatados: a diferença de AUC é de até 0,004, dentro do ruído de um teste com 725 pontos.
 - A altitude responde pela maior parte do desempenho. Sem ela, o AUC cai de cerca de 0,86 para 0,68. No SHAP, com altitude, ela domina com folga; sem altitude, a declividade (SHAP médio absoluto de 0,52 a 0,56) e a curvatura (0,23 a 0,24) passam a ser os fatores mais importantes.
 - AUC no teste por município (XGBoost): com altitude, Jaboatão 0,881 e Recife 0,824; sem altitude, Jaboatão 0,656 e Recife 0,761.
-- Sensibilidade à janela de extração dos fatores (15 m × 45 m): a janela de 45 m elevou o AUC sem altitude de 0,656 para cerca de 0,68 e foi adotada.
+- Sensibilidade à janela de extração dos fatores (15 m × 45 m): a janela de 45 m elevou o AUC sem altitude de 0,656 para cerca de 0,68 e foi adotada. A janela de extração e a comparação com e sem altitude foram decididas olhando também o desempenho no teste; a validação cruzada apontou a mesma direção apenas na versão sem altitude.
 
 Distribuição dos registros por classe de suscetibilidade (percentual da área e dos registros; não expõe contagens nem posições):
 
@@ -160,16 +161,21 @@ Hiperparâmetros e detalhes da validação cruzada estão na página do relatór
 
 Os mapas representam suscetibilidade e não substituem avaliações geotécnicas locais ou sistemas de alerta.
 
-- Apenas fatores derivados do MDT. Geologia e uso e cobertura da terra não foram incorporados por escala incompatível; a importância da altitude pode refletir, em parte, essa ausência.
-- O inventário se concentra onde há ocupação densa. Áreas sem registros (por exemplo, a zona rural) não foram validadas.
-- O PE3D é de 2014 a 2016; mudanças posteriores no terreno não estão representadas.
-- As classes são quintis, ou seja, posições relativas, não níveis absolutos de perigo.
+- **Fatores.** Apenas fatores derivados do MDT. Geologia e uso e cobertura da terra não foram incorporados por escala incompatível; a importância da altitude pode refletir, em parte, essa ausência.
+- **Registros e ausências.** Os registros se concentram onde há ocupação e atendimento a ocorrências; as ausências são presumidas e podem incluir deslizamentos não registrados. Áreas sem registros, como a zona rural, não foram validadas.
+- **Posição e escala.** Os registros têm incerteza de posição (atenuada pela janela de 45 m), o MDT foi reamostrado de 1 m para 5 m e o PE3D é de 2014 a 2016.
+- **Avaliação.** Um único conjunto de teste (725 pontos), sem intervalos de confiança; a janela de extração e a comparação com e sem altitude foram decididas olhando também o teste; não houve validação externa nem temporal.
+- **Índice.** Não é uma probabilidade calibrada; as classes são quintis, ou seja, posições relativas, não níveis absolutos de perigo.
+- **Cobertura.** Apenas Recife e Jaboatão dos Guararapes; a expansão para a RMR depende de novos registros.
 
 ## Referências
 
+- Pfaltzgraff, P. A. dos S. (2007). *Mapa de suscetibilidade a deslizamentos na região metropolitana do Recife*. Tese (Doutorado em Geociências), Universidade Federal de Pernambuco, Recife.
+- Torres, F. S. de M.; Pfaltzgraff, P. A. dos S. (2024). Construção de mapas de suscetibilidade a deslizamentos com uso de dados de acesso livre: Região Metropolitana do Recife (PE). *Geotecnia*, 160, 25-36. doi:10.14195/2184-8394_160_2
 - Reichenbach, P. et al. (2018). A review of statistically-based landslide susceptibility models. *Earth-Science Reviews*, 180, 60-91. doi:10.1016/j.earscirev.2018.03.001
 - Merghadi, A. et al. (2020). Machine learning methods for landslide susceptibility studies: a comparative overview of algorithm performance. *Earth-Science Reviews*, 207, 103225. doi:10.1016/j.earscirev.2020.103225
 - Zhang, J. et al. (2023). Insights into geospatial heterogeneity of landslide susceptibility based on the SHAP-XGBoost model. *Journal of Environmental Management*, 332, 117357. doi:10.1016/j.jenvman.2023.117357
 - Roberts, D. R. et al. (2017). Cross-validation strategies for data with temporal, spatial, hierarchical, or phylogenetic structure. *Ecography*, 40, 913-929.
 - Lundberg, S. M.; Lee, S.-I. (2017). A unified approach to interpreting model predictions. *Advances in Neural Information Processing Systems*, 30.
+- Material do curso: ebook do Future Tech Leaders Brasil (<https://ftl-brazil-2026.github.io/ebook/>).
 

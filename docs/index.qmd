@@ -207,7 +207,7 @@ Com altitude, as duas classes mais altas (29,2% da área) concentram 80,2% dos r
 
 # Deployment e produto final
 
-O produto final é um **WebGIS estático** (MapLibre GL JS), publicado no GitHub Pages ([clar1x.github.io/suscetirmr/mapa](https://clar1x.github.io/suscetirmr/mapa/)), com duas camadas alternáveis (com e sem altitude), dois mapas base (ruas e relevo), controle de opacidade, legenda, desempenho do modelo, tabela de percentuais por classe, gráfico SHAP e uma metodologia resumida. Este relatório é publicado na mesma página do projeto. Os modelos treinados estão em `modelos/`, com exemplo de uso.
+O produto final é um **WebGIS estático** (MapLibre GL JS), publicado no GitHub Pages ([clar1x.github.io/suscetirmr/mapa](https://clar1x.github.io/suscetirmr/mapa/)), com duas camadas alternáveis (com e sem altitude), dois mapas base (ruas e relevo) e uma camada opcional de relevo sombreado do PE3D, consulta por clique (classe do ponto nas duas versões), filtro por classe, controle de opacidade, legenda, desempenho do modelo, tabela de percentuais por classe, gráfico SHAP e uma metodologia resumida.
 
 # Implementação do código
 
@@ -222,6 +222,7 @@ Todo o código está no GitHub, com README que descreve o objetivo, a estrutura,
 | Treino e avaliação | `src/treinar.py` |
 | SHAP | `src/shap_analise.py` |
 | Mapas e WebGIS | `src/mapa_suscetibilidade.py`, `src/exportar_webgis.py` |
+| Relevo sombreado do WebGIS | `src/exportar_relevo.py` |
 | EDA e curva ROC | `src/eda_figuras.py`, `src/curva_roc.py`
 
 # Limitações e trabalhos futuros
