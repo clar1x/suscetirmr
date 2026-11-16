@@ -234,3 +234,4 @@ data/
 *.joblib
 outputs_j3/
 !modelos/*.joblib
+outputs/
