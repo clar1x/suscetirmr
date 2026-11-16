@@ -1,0 +1,132 @@
+{
+  "completo": {
+    "titulo": "Modelo completo (com altitude)",
+    "imagem": "camadas/completo.png",
+    "coordenadas": [
+      [
+        -35.12600720938579,
+        -7.915158422157267
+      ],
+      [
+        -34.84243248456808,
+        -7.915158422157267
+      ],
+      [
+        -34.84243248456808,
+        -8.251273369857357
+      ],
+      [
+        -35.12600720938579,
+        -8.251273369857357
+      ]
+    ],
+    "auc_teste": 0.867,
+    "shap": "camadas/shap_completo.png",
+    "limiar_plano": 1.5,
+    "pct_area_plana": 26.9,
+    "pct_presencas_planas": 5.0,
+    "distribuicao": [
+      {
+        "classe": "Muito baixa",
+        "area": 14.6,
+        "presencas_teste": 0.0,
+        "presencas_todas": 0.2
+      },
+      {
+        "classe": "Baixa",
+        "area": 14.6,
+        "presencas_teste": 0.7,
+        "presencas_todas": 3.8
+      },
+      {
+        "classe": "Média",
+        "area": 14.6,
+        "presencas_teste": 15.0,
+        "presencas_todas": 14.4
+      },
+      {
+        "classe": "Alta",
+        "area": 14.6,
+        "presencas_teste": 33.1,
+        "presencas_todas": 28.9
+      },
+      {
+        "classe": "Muito alta",
+        "area": 14.6,
+        "presencas_teste": 47.1,
+        "presencas_todas": 47.5
+      },
+      {
+        "classe": "Relevo plano (cinza)",
+        "area": 26.9,
+        "presencas_teste": 4.2,
+        "presencas_todas": 5.2
+      }
+    ]
+  },
+  "terreno": {
+    "titulo": "Somente fatores de terreno (sem altitude)",
+    "imagem": "camadas/terreno.png",
+    "coordenadas": [
+      [
+        -35.12600720938579,
+        -7.915158422157267
+      ],
+      [
+        -34.84243248456808,
+        -7.915158422157267
+      ],
+      [
+        -34.84243248456808,
+        -8.251273369857357
+      ],
+      [
+        -35.12600720938579,
+        -8.251273369857357
+      ]
+    ],
+    "auc_teste": 0.679,
+    "shap": "camadas/shap_terreno.png",
+    "limiar_plano": 1.5,
+    "pct_area_plana": 26.9,
+    "pct_presencas_planas": 5.0,
+    "distribuicao": [
+      {
+        "classe": "Muito baixa",
+        "area": 14.6,
+        "presencas_teste": 10.5,
+        "presencas_todas": 7.6
+      },
+      {
+        "classe": "Baixa",
+        "area": 14.6,
+        "presencas_teste": 13.5,
+        "presencas_todas": 12.2
+      },
+      {
+        "classe": "Média",
+        "area": 14.6,
+        "presencas_teste": 21.6,
+        "presencas_todas": 18.9
+      },
+      {
+        "classe": "Alta",
+        "area": 14.6,
+        "presencas_teste": 23.3,
+        "presencas_todas": 23.0
+      },
+      {
+        "classe": "Muito alta",
+        "area": 14.6,
+        "presencas_teste": 27.0,
+        "presencas_todas": 33.1
+      },
+      {
+        "classe": "Relevo plano (cinza)",
+        "area": 26.9,
+        "presencas_teste": 4.2,
+        "presencas_todas": 5.2
+      }
+    ]
+  }
+}

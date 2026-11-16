@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SuscetiRMR | Suscetibilidade a deslizamentos</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; height: 100vh; display: grid; grid-template-columns: 380px 1fr; font-family: system-ui, sans-serif; color: #222; }
+  aside { padding: 16px; overflow-y: auto; border-right: 1px solid #d9d9d9; }
+  #mapa { height: 100%; }
+  h1 { font-size: 1.3rem; margin: 0 0 6px; }
+  h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: #555; margin: 18px 0 6px; }
+  p, label, .legenda div, summary { font-size: .9rem; line-height: 1.4; margin: 4px 0; }
+  .aviso { background: #fff7e0; border: 1px solid #f0d58a; border-radius: 6px; padding: 8px 10px; font-size: .82rem; }
+  .legenda div { display: flex; align-items: center; gap: 8px; }
+  .legenda i { width: 18px; height: 14px; border: 1px solid #999; flex: none; }
+  label { display: block; }
+  img { max-width: 100%; border: 1px solid #d9d9d9; }
+  table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+  th, td { border-bottom: 1px solid #e3e3e3; padding: 3px 4px; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  details { margin-top: 18px; }
+  summary { cursor: pointer; font-weight: 600; }
+  @media (max-width: 800px) {
+    body { grid-template-columns: 1fr; grid-template-rows: 55vh 45vh; }
+    #mapa { order: -1; }
+    aside { border-right: 0; border-top: 1px solid #d9d9d9; }
+  }
+</style>
+</head>
+<body>
+<aside>
+  <h1>SuscetiRMR</h1>
+  <p>Suscetibilidade a deslizamentos em Recife e Jaboatão dos Guararapes (PE), modelada com XGBoost a partir de fatores derivados do MDT PE3D.</p>
+  <div class="aviso">Índice relativo em cinco classes (quintis calculados na área de relevo não plano). Não é probabilidade de ocorrência nem mapa de risco: não considera exposição nem vulnerabilidade. Em áreas com poucos registros históricos, como a zona rural, o índice reflete apenas o terreno e não foi validado.</div>
+  <h2>Mapa base</h2>
+  <label><input type="radio" name="base" value="osm" checked> Ruas (OpenStreetMap)</label>
+  <label><input type="radio" name="base" value="topo"> Relevo (OpenTopoMap)</label>
+  <h2>Camada</h2>
+  <div id="opcoes"></div>
+  <p id="descricao"></p>
+  <h2>Opacidade</h2>
+  <input id="opacidade" type="range" min="0" max="1" step="0.05" value="0.75" style="width:100%">
+  <h2>Legenda</h2>
+  <div class="legenda" id="legenda"></div>
+  <p id="nota-plano"></p>
+  <h2>Desempenho</h2>
+  <p id="desempenho"></p>
+  <h2>Onde caem os registros de deslizamento</h2>
+  <p>Percentual dos registros históricos em cada classe, comparado ao percentual da área. Os registros de teste não foram usados no treino do modelo.</p>
+  <table id="tabela-classes"></table>
+  <h2>O que pesa no modelo (SHAP)</h2>
+  <img id="shap" alt="Gráfico SHAP do modelo selecionado">
+  <details>
+    <summary>Metodologia resumida</summary>
+    <p><b>Dados.</b> Pontos históricos de deslizamentos (presenças) e pontos de não ocorrência sorteados na mesma quantidade por município, a pelo menos 100 m das presenças. Fatores derivados do MDT PE3D (1 m, reamostrado para 5 m): altitude, declividade, orientação (norte e leste), curvatura, TWI e fluxo acumulado, calculados como média numa janela de 45 m.</p>
+    <p><b>Random Forest.</b> Conjunto de árvores de decisão treinadas em amostras diferentes dos dados; a previsão é a média das árvores, o que reduz o sobreajuste.</p>
+    <p><b>XGBoost.</b> Também usa árvores, mas construídas em sequência: cada nova árvore corrige os erros das anteriores (gradient boosting). É o modelo exibido no mapa.</p>
+    <p><b>Validação.</b> Os dados foram separados em blocos espaciais de 2 km. Vinte por cento dos blocos ficaram reservados para o teste, e o ajuste de hiperparâmetros usou validação cruzada em blocos, para que pontos vizinhos não apareçam ao mesmo tempo no treino e na validação.</p>
+    <p><b>SHAP.</b> Atribui a cada fator a sua contribuição para o índice previsto em cada ponto: valores positivos aumentam o índice e negativos o reduzem.</p>
+    <p><b>Mapa.</b> O índice é a saída do modelo (0 a 1) e as classes são quintis dessa saída na área de relevo não plano. É um índice relativo, não uma probabilidade real.</p>
+    <p><b>Limitações.</b> Apenas fatores de terreno, sem geologia, cobertura vegetal nem pluviometria. Áreas sem registros históricos não foram validadas.</p>
+  </details>
+  <h2>Dados e créditos</h2>
+  <p>MDT: PE3D/APAC. Limites municipais: IBGE. Mapas base: © OpenStreetMap contributors; © OpenTopoMap (CC-BY-SA).</p>
+  <p>Projeto Capstone, Future Tech Leaders Brasil 2026. Documentação completa no <a href="https://github.com/clar1x/suscetirmr">documentação no GitHub</a>.</p>
+</aside>
+<div id="mapa"></div>
+<script>
+const PADRAO = "terreno";
+const CLASSES = [
+  ["Muito baixa", "rgb(255,255,178)"], ["Baixa", "rgb(254,204,92)"], ["Média", "rgb(253,141,60)"],
+  ["Alta", "rgb(240,59,32)"], ["Muito alta", "rgb(189,0,38)"]
+];
+const DESCRICOES = {
+  completo: "Inclui a altitude, que domina o modelo e atua em parte como proxy do contexto geomorfológico (baixada contra morros).",
+  terreno: "Usa apenas declividade, curvatura, orientação, TWI e acumulação de fluxo."
+};
+const pt = (n) => String(n).replace(".", ",");
+
+const mapa = new maplibregl.Map({
+  container: "mapa",
+  style: {
+    version: 8,
+    sources: {
+      osm: { type: "raster", tileSize: 256, attribution: "© OpenStreetMap contributors",
+             tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"] },
+      topo: { type: "raster", tileSize: 256, maxzoom: 17,
+              attribution: "Dados: © OpenStreetMap contributors, SRTM | Estilo: © OpenTopoMap (CC-BY-SA)",
+              tiles: ["https://a.tile.opentopomap.org/{z}/{x}/{y}.png"] }
+    },
+    layers: [
+      { id: "osm", type: "raster", source: "osm" },
+      { id: "topo", type: "raster", source: "topo", layout: { visibility: "none" } }
+    ]
+  },
+  center: [-34.95, -8.1],
+  zoom: 10
+});
+mapa.addControl(new maplibregl.NavigationControl(), "top-right");
+mapa.addControl(new maplibregl.ScaleControl());
+
+document.querySelectorAll("input[name=base]").forEach((r) =>
+  r.addEventListener("change", (e) => {
+    mapa.setLayoutProperty("osm", "visibility", e.target.value === "osm" ? "visible" : "none");
+    mapa.setLayoutProperty("topo", "visibility", e.target.value === "topo" ? "visible" : "none");
+  }));
+
+mapa.on("load", async () => {
+  const config = await (await fetch("camadas/config.json")).json();
+  const chaves = Object.keys(config);
+  const opacidade = document.getElementById("opacidade");
+  const ref = config[PADRAO];
+
+  chaves.forEach((chave) => {
+    mapa.addSource(chave, { type: "image", url: config[chave].imagem, coordinates: config[chave].coordenadas });
+    mapa.addLayer({
+      id: chave, type: "raster", source: chave,
+      layout: { visibility: "none" },
+      paint: { "raster-opacity": Number(opacidade.value), "raster-fade-duration": 0 }
+    });
+  });
+
+  mapa.addSource("limites", { type: "geojson", data: "camadas/limites.geojson" });
+  mapa.addLayer({ id: "limites", type: "line", source: "limites", paint: { "line-color": "#333", "line-width": 1.5 } });
+
+  const limiar = pt(ref.limiar_plano);
+  document.getElementById("legenda").innerHTML = [...CLASSES, [`Relevo plano (declividade média < ${limiar}°)`, "rgb(190,190,190)"]]
+    .map(([nome, cor]) => `<div><i style="background:${cor}"></i>${nome}</div>`).join("");
+  document.getElementById("nota-plano").textContent =
+    `Em cinza, o relevo plano (declividade média abaixo de ${limiar}° numa janela de 45 m; ${pt(ref.pct_area_plana)}% da área mapeada), fora do foco do modelo. Esse limiar deixa de fora ${pt(ref.pct_presencas_planas)}% dos pontos de deslizamento usados no treino.`;
+
+  function selecionar(chave) {
+    chaves.forEach((c) => mapa.setLayoutProperty(c, "visibility", c === chave ? "visible" : "none"));
+    document.getElementById("desempenho").textContent =
+      `AUC no teste, em blocos espaciais não vistos no treino: ${pt(config[chave].auc_teste)}`;
+    document.getElementById("descricao").textContent = DESCRICOES[chave];
+    document.getElementById("shap").src = config[chave].shap;
+    const linhas = config[chave].distribuicao.map((l) =>
+      `<tr><td>${l.classe}</td><td>${pt(l.area)}%</td><td>${pt(l.presencas_teste)}%</td><td>${pt(l.presencas_todas)}%</td></tr>`).join("");
+    document.getElementById("tabela-classes").innerHTML =
+      "<tr><th>Classe</th><th>Área</th><th>Registros (teste)</th><th>Registros (todos)</th></tr>" + linhas;
+  }
+
+  document.getElementById("opcoes").innerHTML = chaves
+    .map((c) => `<label><input type="radio" name="camada" value="${c}" ${c === PADRAO ? "checked" : ""}> ${config[c].titulo}</label>`)
+    .join("");
+  document.querySelectorAll("input[name=camada]").forEach((r) =>
+    r.addEventListener("change", (e) => selecionar(e.target.value)));
+  opacidade.addEventListener("input", (e) =>
+    chaves.forEach((c) => mapa.setPaintProperty(c, "raster-opacity", Number(e.target.value))));
+
+  const [noroeste, nordeste, , sudoeste] = ref.coordenadas;
+  mapa.fitBounds([[sudoeste[0], sudoeste[1]], [nordeste[0], nordeste[1]]], { padding: 20, animate: false });
+  selecionar(PADRAO);
+});
+</script>
+</body>
+</html>
