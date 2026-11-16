@@ -220,7 +220,7 @@ Todo o código está no GitHub, com README que descreve o objetivo, a estrutura,
 | Treino e avaliação | `src/treinar.py` |
 | SHAP | `src/shap_analise.py` |
 | Mapas e WebGIS | `src/mapa_suscetibilidade.py`, `src/exportar_webgis.py` |
-| EDA e curva ROC | src/eda_figuras.py, src/curva_roc.py |.
+| EDA e curva ROC | `src/eda_figuras.py`, `src/curva_roc.py`
 
 # Limitações e trabalhos futuros
 
