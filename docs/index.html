@@ -2268,7 +2268,7 @@ vertical-align: -.125em;
 <section id="introdução-e-importância" class="level1" data-number="1">
 <h1 data-number="1"><span class="header-section-number">1</span> Introdução e importância</h1>
 <p>A ocupação de encostas urbanas e a ocorrência de deslizamentos constituem desafios para o planejamento territorial da Região Metropolitana do Recife (RMR), onde eventos de chuvas intensas, como os de 2022, tornam a antecipação das áreas mais predispostas uma necessidade para a gestão de riscos.</p>
-<p><strong>Problema.</strong> Faltam mapas de suscetibilidade a deslizamentos que sejam reprodutíveis, interpretáveis e de fácil acesso para Recife e Jaboatão dos Guararapes.</p>
+<p><strong>Problema.</strong> Já existem mapas de suscetibilidade a deslizamentos para a RMR, mas faltam modelos abertos, reprodutíveis e interpretáveis, avaliados com validação espacial e capazes de mostrar quais fatores sustentam cada previsão, para Recife e Jaboatão dos Guararapes.</p>
 <p><strong>Tarefa.</strong> Classificação supervisionada binária (presença de deslizamento contra não ocorrência presumida) a partir de fatores derivados de um modelo digital de terreno.</p>
 <p><strong>Objetivo específico.</strong> Desenvolver e comparar modelos de suscetibilidade (Random Forest e XGBoost), interpretar a contribuição dos fatores com SHAP e disponibilizar os mapas em um WebGIS.</p>
 <p><strong>Relevância para os ODS e para o ecossistema geoespacial.</strong> O projeto se relaciona ao ODS 11 (Cidades e Comunidades Sustentáveis), ao apoiar o planejamento urbano, a identificação de áreas prioritárias para ações preventivas e a atuação da Defesa Civil, e ao ODS 13 (Ação Contra a Mudança Global do Clima), ao oferecer subsídios para a preparação das cidades diante de chuvas intensas. No ecossistema geoespacial, combina dados abertos (MDT PE3D e limites do IBGE), aprendizado de máquina interpretável e um WebGIS estático e de código aberto. Os mapas representam <strong>suscetibilidade</strong>, e não substituem análises de risco, que consideram exposição e vulnerabilidade.</p>
@@ -2278,7 +2278,8 @@ vertical-align: -.125em;
 <p>Reichenbach et al. (2018) revisam os modelos estatísticos de suscetibilidade a deslizamentos e organizam as decisões que moldam o resultado: o inventário, as unidades de mapeamento, os fatores condicionantes, o método e a validação. Para este projeto, o trabalho serve de roteiro metodológico e reforça que a qualidade do inventário e a forma de avaliar o modelo pesam tanto quanto o algoritmo escolhido.</p>
 <p>Merghadi et al. (2020) comparam algoritmos de aprendizado de máquina para o mesmo problema e discutem seu desempenho, com resultados competitivos para métodos baseados em árvores. Isso fundamenta a escolha do Random Forest e do XGBoost, e a lição de comparar os algoritmos sob um mesmo protocolo de avaliação foi adotada aqui.</p>
 <p>Zhang et al. (2023) combinam XGBoost e SHAP para interpretar a suscetibilidade e examinar como a contribuição dos fatores varia no espaço (heterogeneidade geoespacial). O projeto adota a mesma dupla de técnicas e compara a estrutura de contribuições entre Recife e Jaboatão.</p>
-<p>Dois trabalhos complementam a base metodológica: Roberts et al. (2017), que mostram por que dados com dependência espacial exigem validação cruzada em blocos, e Lundberg e Lee (2017), que propõem o SHAP. As lacunas que o projeto aborda são a avaliação com validação espacial em um inventário heterogêneo, a comparação entre municípios vizinhos e a entrega dos resultados em um formato aberto e interativo.</p>
+<p>Na RMR, o mapa de suscetibilidade a deslizamentos de Pfaltzgraff (2007) é a referência regional, e um trabalho de 2024 propôs um mapa para a região com dados de acesso livre, validado com setores de risco e com o mapa atualizado dos deslizamentos ocorridos. Esses mapas servem de ponto de comparação; este projeto se diferencia por usar aprendizado de máquina com validação espacial, interpretação por SHAP e uma entrega aberta e reprodutível.</p>
+<p>Dois trabalhos complementam a base metodológica: Roberts et al. (2017), que mostram por que dados com dependência espacial exigem validação cruzada em blocos, e Lundberg e Lee (2017), que propõem o SHAP. As lacunas que o projeto aborda são a avaliação com validação espacial em registros heterogêneos, a comparação entre municípios vizinhos e a entrega dos resultados em um formato aberto e interativo.</p>
 </section>
 <section id="metodologia" class="level1" data-number="3">
 <h1 data-number="3"><span class="header-section-number">3</span> Metodologia</h1>
@@ -2303,9 +2304,9 @@ vertical-align: -.125em;
 </thead>
 <tbody>
 <tr class="odd">
-<td>Inventário histórico de deslizamentos</td>
+<td>Registros históricos de deslizamentos</td>
 <td>Pontos (shapefile)</td>
-<td>Registros de ocorrências de várias fontes e períodos</td>
+<td>Ocorrências de vários períodos</td>
 <td>Presenças para o treinamento</td>
 <td><strong>Restrito</strong></td>
 </tr>
@@ -2325,13 +2326,13 @@ vertical-align: -.125em;
 </tr>
 </tbody>
 </table>
-<p>Os registros de deslizamentos têm acesso restrito: foram usados apenas no treinamento dos modelos e não são exibidos nem disponibilizados em nenhuma forma. Estão disponíveis publicamente o código, os modelos treinados, os mapas, os gráficos SHAP, as métricas e a distribuição percentual dos registros por classe (sem expor os pontos). O repositório está no GitHub; os modelos estão na pasta <code>modelos/</code> (hospedagem em outra plataforma, como Hugging Face, é opcional). A política completa está em <code>docs/politica_dados.md</code>.</p>
+<p>Os registros de deslizamentos têm acesso restrito: foram usados apenas para treinar e avaliar os modelos e não são exibidos nem disponibilizados em nenhuma forma. Estão disponíveis publicamente o código, os modelos treinados, os mapas, os gráficos SHAP, as métricas e a distribuição percentual dos registros por classe (sem expor os pontos). O repositório está no GitHub; os modelos estão na pasta <code>modelos/</code>. A política completa está em <code>docs/politica_dados.md</code>.</p>
 <p><strong>Onde encontrar os dados públicos.</strong> O PE3D (Pernambuco Tridimensional) é um programa do Governo de Pernambuco que gerou dados espaciais de alta definição de todo o estado por varredura a laser; os produtos são consultados e baixados pelo serviço estadual <a href="https://pe3d.pe.gov.br/">Consultar Pernambuco Tridimensional - PE3D</a>. As malhas municipais do IBGE, agrupadas por estado, estão em <a href="https://ibge.gov.br/geociencias/organizacao-do-territorio/estrutura-territorial/15774-malhas.html">Malhas Territoriais</a>. Os dados de entrada restritos não são publicados, e o repositório disponibiliza os modelos e os mapas derivados (Hugging Face ou Zenodo não foram usados).</p>
 </section>
 <section id="descrição-da-metodologia" class="level2" data-number="3.2">
 <h2 data-number="3.2" class="anchored" data-anchor-id="descrição-da-metodologia"><span class="header-section-number">3.2</span> Descrição da metodologia</h2>
 <p><strong>Coleta e organização.</strong> As 98 folhas do MDT (48 de Recife e 50 de Jaboatão), todas em EPSG:31985 e <code>float32</code>, têm pixels com resolução ligeiramente diferente de 1 m (0,9997 a 1,0 m), o que gera emendas em mosaicos convencionais. Elas foram reunidas e reamostradas para uma única grade de 5 m com o GDAL (<code>scripts/mosaico_mdt.sh</code>).</p>
-<p><strong>Amostragem das presenças.</strong> Registros de 2010 a 2025 em Recife e Jaboatão, remoção de duplicatas (10 m), no máximo 5 pontos por célula de 250 m e distância mínima de 25 m, resultando em 1.500 presenças com boa distribuição espacial.</p>
+<p><strong>Amostragem das presenças.</strong> Foram usados registros de 2010 a 2025 em Recife e Jaboatão, com remoção de duplicatas (10 m), no máximo 5 pontos por célula de 250 m e distância mínima de 25 m, o que resultou em 1.500 presenças com boa distribuição espacial.</p>
 <p><strong>Fatores condicionantes.</strong> Declividade e orientação (decompostas em componentes norte e leste) com <code>xarray-spatial</code>; fluxo acumulado com <code>pysheds</code> (preenchimento de depressões, direção D8 e acumulação), apresentado em escala logarítmica; curvatura e índice topográfico de umidade (TWI, calculado a partir do fluxo acumulado e da declividade); e a altitude. Cada fator foi extraído nos pontos como <strong>média numa janela de 45 m (9 × 9 pixels)</strong>, para atenuar a imprecisão posicional dos registros.</p>
 <p><strong>Ausências.</strong> 1.500 pontos sorteados por município, na mesma quantidade das presenças de cada um, em pixels com MDT válido e a pelo menos 100 m de qualquer presença. A base tem, portanto, classes equilibradas (1:1) por construção.</p>
 <p><strong>Limpeza e estrutura dos dados.</strong> Foram descartados os registros sem geometria válida, fora do período ou fora dos dois municípios, as duplicatas e os pontos muito próximos entre si. A tabela de modelagem tem uma linha por ponto (presença ou ausência) e a estrutura abaixo; ela contém as posições dos registros e, por isso, não é publicada.</p>
@@ -2407,7 +2408,7 @@ vertical-align: -.125em;
 <h2 data-number="3.4" class="anchored" data-anchor-id="treinamento-do-modelo"><span class="header-section-number">3.4</span> Treinamento do modelo</h2>
 <p>Seguindo o fluxo da aula de Machine Learning I, mas com divisão espacial em vez de temporal:</p>
 <ul>
-<li><strong>Divisão.</strong> Os dados foram agrupados em blocos espaciais de 2 km (142 blocos). Vinte por cento dos blocos foram reservados para o <strong>teste</strong> (725 pontos), usado uma única vez ao final; os demais (2.275 pontos) formaram o treino e a validação.</li>
+<li><strong>Divisão.</strong> Os dados foram agrupados em blocos espaciais de 2 km (142 blocos). Vinte por cento dos blocos foram reservados para o <strong>teste</strong> (725 pontos), reservado para a avaliação final e não usado no ajuste dos hiperparâmetros; os demais (2.275 pontos) formaram o treino e a validação.</li>
 <li><strong>Otimização.</strong> <code>GridSearchCV</code> com a métrica <strong>AUC-ROC</strong>, nos dois modelos, com sementes fixas (<code>SEED = 42</code>).</li>
 <li><strong>Função de perda.</strong> Entropia cruzada (<em>logloss</em>) no XGBoost e critério de Gini no Random Forest (padrões do scikit-learn). Épocas, tamanho de lote e taxa de aprendizagem de rede neural não se aplicam.</li>
 </ul>
@@ -2476,7 +2477,7 @@ vertical-align: -.125em;
 </section>
 <section id="validação-cruzada" class="level2" data-number="3.5">
 <h2 data-number="3.5" class="anchored" data-anchor-id="validação-cruzada"><span class="header-section-number">3.5</span> Validação cruzada</h2>
-<p>A validação cruzada espacial usa <code>GroupKFold</code> com 4 folds, em que cada fold deixa blocos de 2 km inteiros de fora do treino. Ela faz o papel do <code>TimeSeriesSplit</code> da aula: evitar que o modelo veja, no treino, vizinhos do que será validado, o que superestimaria o desempenho (Roberts et al., 2017). O AUC médio de validação é de 0,80 com altitude e 0,66 sem altitude (tabelas acima), e é consistente com o desempenho no teste (0,86 e 0,68).</p>
+<p>A validação cruzada espacial usa <code>GroupKFold</code> com 4 folds, em que cada fold deixa blocos de 2 km inteiros de fora do treino. Ela faz o papel do <code>TimeSeriesSplit</code> da aula: evitar que o modelo veja, no treino, vizinhos do que será validado, o que superestimaria o desempenho (Roberts et al., 2017). O AUC médio de validação é de 0,80 com altitude e 0,66 sem altitude (tabelas acima). Sem altitude, o teste (0,68) coincide com a validação; com altitude, o teste (0,86) ficou acima da validação, o que pode refletir os blocos que caíram no teste.</p>
 </section>
 <section id="avaliação-do-modelo" class="level2" data-number="3.6">
 <h2 data-number="3.6" class="anchored" data-anchor-id="avaliação-do-modelo"><span class="header-section-number">3.6</span> Avaliação do modelo</h2>
@@ -2565,6 +2566,7 @@ vertical-align: -.125em;
 <li>Os dois modelos superam o baseline. Random Forest e XGBoost ficam empatados: a diferença de AUC é de até 0,004, dentro do ruído de um teste com 725 pontos, e não é possível afirmar que um seja melhor.</li>
 <li>A altitude responde pela maior parte do desempenho: sem ela, o AUC cai de cerca de 0,86 para 0,68. Os fatores de terreno sozinhos têm, portanto, poder discriminatório moderado, e o resultado é mais forte em Recife do que em Jaboatão.</li>
 <li>A janela de extração importa: ao passar de 15 m para 45 m, o AUC sem altitude subiu de 0,656 para cerca de 0,68, e a janela maior foi adotada. A diferença é pequena e consistente em todas as comparações, sem pretensão de significância estatística.</li>
+<li>A janela de extração e a comparação com e sem altitude foram decididas olhando também o desempenho no teste; a validação cruzada apontou a mesma direção apenas na versão sem altitude (de 0,650 para 0,663).</li>
 </ul>
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
@@ -2741,22 +2743,32 @@ vertical-align: -.125em;
 <td>Mapas e WebGIS</td>
 <td><code>src/mapa_suscetibilidade.py</code>, <code>src/exportar_webgis.py</code></td>
 </tr>
+<tr class="even">
+<td>EDA e curva ROC</td>
+<td>src/eda_figuras.py, src/curva_roc.py</td>
+</tr>
 </tbody>
 </table>
 </section>
 <section id="limitações-e-trabalhos-futuros" class="level1" data-number="6">
 <h1 data-number="6"><span class="header-section-number">6</span> Limitações e trabalhos futuros</h1>
 <ul>
-<li>Os modelos usam apenas fatores derivados do MDT. Geologia e uso e cobertura da terra não foram incorporados por não estarem em escala compatível com a do MDT e do inventário; a importância da altitude pode refletir, em parte, essa ausência. A incorporação dessas camadas em escala adequada é o principal trabalho futuro.</li>
-<li>s registros históricos se concentram onde há ocupação e atendimento a ocorrências. Áreas sem registros, como a zona rural, não foram validadas, e o índice ali reflete apenas o terreno.</li>
-<li>O PE3D é de 2014 a 2016: mudanças posteriores no terreno não estão representadas.</li>
-<li>O teste usa um único conjunto de blocos; com mais tempo, repetir a divisão com outras sementes mediria a variabilidade do desempenho.</li>
-<li>A transferência espacial de modelos entre os municípios e a expansão para outros municípios da RMR ficam como perspectivas.</li>
+<li><strong>Fatores.</strong> Os modelos usam apenas fatores derivados do MDT. Geologia e uso e cobertura da terra não foram incorporados por não estarem em escala compatível com a do MDT; a importância da altitude pode refletir, em parte, essa ausência. A incorporação dessas camadas em escala adequada é o principal trabalho futuro.</li>
+<li><strong>Registros e ausências.</strong> Os registros se concentram onde há ocupação e atendimento a ocorrências. As ausências são presumidas (sorteadas em locais sem registro) e podem incluir deslizamentos não registrados, o que adiciona ruído aos rótulos. Áreas sem registros, como a zona rural, não foram validadas, e o índice ali reflete apenas o terreno.</li>
+<li><strong>Heterogeneidade e posição.</strong> Os registros vêm de períodos e levantamentos distintos e têm incerteza de posição; a janela de 45 m atenua esse efeito, mas não o elimina, e suaviza feições locais como cortes e taludes.</li>
+<li><strong>Escala e idade do terreno.</strong> O MDT de 1 m foi reamostrado para 5 m e os fatores foram extraídos em janela de 45 m. O PE3D é de 2014 a 2016, e mudanças posteriores no terreno não estão representadas.</li>
+<li><strong>Avaliação.</strong> O teste usa um único conjunto de 725 pontos, sem intervalos de confiança, e diferenças de 0,01 a 0,02 no AUC não são interpretáveis. A janela de extração e a comparação com e sem altitude foram decididas olhando também o teste. O SHAP foi calculado em todos os pontos (treino e teste). Não houve validação externa, por exemplo usando um evento de 2022 como teste temporal.</li>
+<li><strong>Índice.</strong> A saída não é uma probabilidade calibrada, e as classes são quintis, ou seja, posições relativas. O limiar do relevo plano foi definido a partir das presenças.</li>
+<li><strong>Fatores estáticos.</strong> Não há chuva, cobertura vegetal nem uso do solo, que condicionam o gatilho e a estabilidade das encostas.</li>
+<li><strong>Produto.</strong> O WebGIS exibe uma camada raster a 20 m, sem consulta por pixel nem download dos valores.</li>
+<li><strong>Perspectivas.</strong> Transferência espacial entre os municípios, expansão para outros municípios da RMR e validação com setores de risco oficiais.</li>
 </ul>
 </section>
 <section id="referências" class="level1" data-number="7">
 <h1 data-number="7"><span class="header-section-number">7</span> Referências</h1>
 <ul>
+<li>Pfaltzgraff, P. A. dos S. (2007). <em>Mapa de suscetibilidade a deslizamentos na região metropolitana do Recife</em>. Tese (Doutorado em Geociências), Universidade Federal de Pernambuco, Recife.</li>
+<li>Torres, F. S. de M.; Pfaltzgraff, P. A. dos S. (2024). Construção de mapas de suscetibilidade a deslizamentos com uso de dados de acesso livre: Região Metropolitana do Recife (PE). <em>Geotecnia</em>, 160, 25-36. doi:10.14195/2184-8394_160_2</li>
 <li>Reichenbach, P. et al. (2018). A review of statistically-based landslide susceptibility models. <em>Earth-Science Reviews</em>, 180, 60-91. doi:10.1016/j.earscirev.2018.03.001</li>
 <li>Merghadi, A. et al. (2020). Machine learning methods for landslide susceptibility studies: a comparative overview of algorithm performance. <em>Earth-Science Reviews</em>, 207, 103225. doi:10.1016/j.earscirev.2020.103225</li>
 <li>Zhang, J. et al. (2023). Insights into geospatial heterogeneity of landslide susceptibility based on the SHAP-XGBoost model. <em>Journal of Environmental Management</em>, 332, 117357. doi:10.1016/j.jenvman.2023.117357</li>
