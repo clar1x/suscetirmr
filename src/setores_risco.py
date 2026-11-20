@@ -33,7 +33,7 @@ for coluna in ("NUM_EDIF", "NUM_PESS"):
 g["grau"] = g["GRAU_RISCO"]
 g["processo"] = np.where(g["TIPOLO_E1"].eq("Deslizamento planar"), "Deslizamento planar", "Deslizamento")
 g["situacao"] = g["SITUACAO"]
-g["local"] = g["LOCAL"].str.split(",").str[0].str.strip()
+g["local"] = g["LOCAL"].str.split(",").str[0].str.strip().str.replace(r"^Bairro\s+", "", regex=True)
 g["ano"] = pd.to_datetime(g["DATA_SETOR"]).dt.year
 g["area_m2"] = g.geometry.area.round(0)
 
