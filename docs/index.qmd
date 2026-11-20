@@ -203,6 +203,15 @@ AUC no teste por município (XGBoost): com altitude, Jaboatão 0,881 e Recife 0,
 
 Com altitude, as duas classes mais altas (29,2% da área) concentram 80,2% dos registros de teste, e a classe "muito alta" sozinha tem cerca de 3,2 vezes a sua fatia da área; as duas classes mais baixas somam apenas 0,7%. Sem altitude, a ordem das classes se mantém (o percentual de registros cresce de 10,5% a 27,0% da classe muito baixa à muito alta, no teste), mas a separação é mais fraca: as duas classes mais altas concentram 50,3% dos registros de teste, cerca de 1,7 vez a sua fatia da área, e as duas mais baixas ainda retêm 24,0%. Isso é coerente com o AUC (cerca de 0,86 contra 0,68). Os registros no relevo plano (cinza) são 4,2% no teste e 5,2% no total, próximos dos 5% usados para definir o limiar; a pequena diferença vem de a classificação ser feita na grade de 20 m.
 
+**Validação externa com setores de risco (Jaboatão dos Guararapes).** Como verificação independente do treinamento, o mapa foi comparado com os 178 setores de risco alto e muito alto a deslizamentos mapeados pelo Serviço Geológico do Brasil em Jaboatão (Dias, Elldorf e Santos, 2019), que somam 75,4 ha e, segundo o SGB, cerca de 12,5 mil pessoas. Nenhum setor cai no relevo plano (cinza). A medida é a razão de concentração: o percentual da área dos setores em cada classe dividido pelo percentual da área não plana de Jaboatão nessa classe (1,0 significa que o mapa não distingue os setores do restante).
+
+| Versão | Setores em alta e muito alta (área) | Jaboatão não plano em alta e muito alta | Razão (área) | Razão (pessoas) | Setores em muito baixa e baixa | Jaboatão não plano em muito baixa e baixa | Razão |
+|:--|--:|--:|--:|--:|--:|--:|--:|
+| Com altitude | 67,3% | 34,0% | 1,98 | 2,04 | 7,4% | 45,9% | 0,16 |
+| Sem altitude | 48,9% | 43,3% | 1,13 | 1,15 | 31,9% | 35,0% | 0,91 |
+
+Com altitude, o mapa concentra os setores de risco nas classes altas e quase os exclui das mais baixas. Sem altitude, a separação é fraca: só a classe "muito alta" reúne mais setores do que o esperado (razão de 1,35), enquanto as classes baixa, média e alta ficam em torno de 0,9. Essa medida tem limites: os setores cobrem áreas habitadas e foram mapeados em campo com a Defesa Civil, em parte a partir de ocorrências passadas, e o inventário de treino também se concentra em áreas ocupadas, de modo que a validação não é totalmente independente, e a altitude provavelmente reproduz parte do padrão de ocupação dos morros. As áreas fora dos setores não são "seguras", já que muita encosta íngreme desocupada não foi mapeada. Por isso a medida é de concentração, e não um AUC. A verificação cobre apenas Jaboatão.
+
 **Mapa.** O índice é a saída do modelo (0 a 1), em cinco classes por quintis calculados na área de relevo não plano, com o relevo plano em cinza. É um índice relativo, não uma probabilidade, e as classes são posições relativas, não níveis absolutos de perigo.
 
 # Deployment e produto final
@@ -231,7 +240,7 @@ Todo o código está no GitHub, com README que descreve o objetivo, a estrutura,
 - **Registros e ausências.** Os registros se concentram onde há ocupação e atendimento a ocorrências. As ausências são presumidas (sorteadas em locais sem registro) e podem incluir deslizamentos não registrados, o que adiciona ruído aos rótulos. Áreas sem registros, como a zona rural, não foram validadas, e o índice ali reflete apenas o terreno.
 - **Heterogeneidade e posição.** Os registros vêm de períodos e levantamentos distintos e têm incerteza de posição; a janela de 45 m atenua esse efeito, mas não o elimina, e suaviza feições locais como cortes e taludes.
 - **Escala e idade do terreno.** O MDT de 1 m foi reamostrado para 5 m e os fatores foram extraídos em janela de 45 m. O PE3D é de 2014 a 2016, e mudanças posteriores no terreno não estão representadas.
-- **Avaliação.** O teste usa um único conjunto de 725 pontos, sem intervalos de confiança, e diferenças de 0,01 a 0,02 no AUC não são interpretáveis. A janela de extração e a comparação com e sem altitude foram decididas olhando também o teste. O SHAP foi calculado em todos os pontos (treino e teste). Não houve validação externa, por exemplo usando um evento de 2022 como teste temporal.
+- **Avaliação.** O teste usa um único conjunto de 725 pontos, sem intervalos de confiança, e diferenças de 0,01 a 0,02 no AUC não são interpretáveis. A janela de extração e a comparação com e sem altitude foram decididas olhando também o teste. O SHAP foi calculado em todos os pontos (treino e teste). A validação externa cobre apenas Jaboatão (setores de risco do SGB) e não é totalmente independente do inventário; não houve validação temporal, por exemplo usando um evento de 2022 como teste.
 - **Índice.** A saída não é uma probabilidade calibrada, e as classes são quintis, ou seja, posições relativas. O limiar do relevo plano foi definido a partir das presenças.
 - **Fatores estáticos.** Não há chuva, cobertura vegetal nem uso do solo, que condicionam o gatilho e a estabilidade das encostas.
 - **Produto.** O WebGIS exibe uma camada raster a 20 m, sem consulta por pixel nem download dos valores.
@@ -240,6 +249,7 @@ Todo o código está no GitHub, com README que descreve o objetivo, a estrutura,
 
 # Referências
 
+- Dias, G. P.; Elldorf, B.; Santos, N. T. S. (2019). Setorização de áreas de alto e muito alto risco a movimentos de massa, enchentes e inundações: Jaboatão dos Guararapes, Pernambuco. Recife: CPRM.
 - Pfaltzgraff, P. A. dos S. (2007). *Mapa de suscetibilidade a deslizamentos na região metropolitana do Recife*. Tese (Doutorado em Geociências), Universidade Federal de Pernambuco, Recife.
 - Torres, F. S. de M.; Pfaltzgraff, P. A. dos S. (2024). Construção de mapas de suscetibilidade a deslizamentos com uso de dados de acesso livre: Região Metropolitana do Recife (PE). *Geotecnia*, 160, 25-36. doi:10.14195/2184-8394_160_2
 - Reichenbach, P. et al. (2018). A review of statistically-based landslide susceptibility models. *Earth-Science Reviews*, 180, 60-91. doi:10.1016/j.earscirev.2018.03.001

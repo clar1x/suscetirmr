@@ -128,6 +128,7 @@ O baseline (classe constante) tem AUC de 0,500.
 - A altitude responde pela maior parte do desempenho. Sem ela, o AUC cai de cerca de 0,86 para 0,68. No SHAP, com altitude, ela domina com folga; sem altitude, a declividade (SHAP médio absoluto de 0,52 a 0,56) e a curvatura (0,23 a 0,24) passam a ser os fatores mais importantes.
 - AUC no teste por município (XGBoost): com altitude, Jaboatão 0,881 e Recife 0,824; sem altitude, Jaboatão 0,656 e Recife 0,761.
 - Sensibilidade à janela de extração dos fatores (15 m × 45 m): a janela de 45 m elevou o AUC sem altitude de 0,656 para cerca de 0,68 e foi adotada. A janela de extração e a comparação com e sem altitude foram decididas olhando também o desempenho no teste; a validação cruzada apontou a mesma direção apenas na versão sem altitude.
+- Validação externa com 178 setores de risco do SGB em Jaboatão: razão de concentração nas classes alta e muito alta de 2,0 com altitude e de 1,1 sem altitude, em relação à área não plana do município.
 
 Distribuição dos registros por classe de suscetibilidade (percentual da área e dos registros; não expõe contagens nem posições):
 
@@ -164,7 +165,7 @@ Os mapas representam suscetibilidade e não substituem avaliações geotécnicas
 - **Fatores.** Apenas fatores derivados do MDT. Geologia e uso e cobertura da terra não foram incorporados por escala incompatível; a importância da altitude pode refletir, em parte, essa ausência.
 - **Registros e ausências.** Os registros se concentram onde há ocupação e atendimento a ocorrências; as ausências são presumidas e podem incluir deslizamentos não registrados. Áreas sem registros, como a zona rural, não foram validadas.
 - **Posição e escala.** Os registros têm incerteza de posição (atenuada pela janela de 45 m), o MDT foi reamostrado de 1 m para 5 m e o PE3D é de 2014 a 2016.
-- **Avaliação.** Um único conjunto de teste (725 pontos), sem intervalos de confiança; a janela de extração e a comparação com e sem altitude foram decididas olhando também o teste; não houve validação externa nem temporal.
+- **Avaliação.** Um único conjunto de teste (725 pontos), sem intervalos de confiança; a janela de extração e a comparação com e sem altitude foram decididas olhando também o teste; a validação externa cobre apenas Jaboatão (setores de risco do SGB) e não é totalmente independente do inventário; não houve validação temporal.
 - **Índice.** Não é uma probabilidade calibrada; as classes são quintis, ou seja, posições relativas, não níveis absolutos de perigo.
 - **Cobertura.** Apenas Recife e Jaboatão dos Guararapes; a expansão para a RMR depende de novos registros.
 
